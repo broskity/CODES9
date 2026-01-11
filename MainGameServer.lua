@@ -2694,6 +2694,18 @@ end
 -- STUN NPC FUNCTION - Con detección de Head vs Body
 -- -------------------------------------------------------------------------------
 
+-- Configuration: Head part name patterns for detection
+local HEAD_PART_PATTERNS = {
+	"Head", "Skull", "Eye", "Face", "Jaw", 
+	"Mouth", "Hood", "Void", "Brow", "Cranium"
+}
+
+-- Configuration: Head part names to search for in model
+local HEAD_PART_NAMES = {
+	"HeadMain", "Head", "Eyeball", "VoidFace", 
+	"HoodBack", "SkullMain"
+}
+
 local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier, hitPart)
 	if not npcModel or not npcModel.Parent then return end
 
@@ -2738,19 +2750,21 @@ local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier, hitPart
 		if hitPart then
 			local hitPartName = hitPart.Name
 			
-			-- Verificar si golpeó directamente una parte de la cabeza
-			if hitPartName:find("Head") or hitPartName:find("Skull") or hitPartName:find("Eye") 
-				or hitPartName:find("Face") or hitPartName:find("Jaw") or hitPartName:find("Mouth")
-				or hitPartName:find("Hood") or hitPartName:find("Void") then
-				isHeadHit = true
-			else
+			-- Verificar si golpeó directamente una parte de la cabeza usando patrones configurados
+			for _, pattern in ipairs(HEAD_PART_PATTERNS) do
+				if hitPartName:find(pattern) then
+					isHeadHit = true
+					break
+				end
+			end
+			
+			if not isHeadHit then
 				-- Si no es una parte clara de cabeza, usar detección por posición Y
-				local headPart = npcModel:FindFirstChild("HeadMain") 
-					or npcModel:FindFirstChild("Head") 
-					or npcModel:FindFirstChild("Eyeball")
-					or npcModel:FindFirstChild("VoidFace")
-					or npcModel:FindFirstChild("HoodBack")
-					or npcModel:FindFirstChild("SkullMain")
+				local headPart = nil
+				for _, partName in ipairs(HEAD_PART_NAMES) do
+					headPart = npcModel:FindFirstChild(partName)
+					if headPart then break end
+				end
 				
 				if headPart and hitPart.Position then
 					-- Si el impacto está cerca de la altura de la cabeza (dentro de un rango)
@@ -2794,8 +2808,8 @@ local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier, hitPart
 		hitZone = "LEGACY"
 	end
 
-	-- Calculate final stun time (no aplicar stunMultiplier porque ya está en los tiempos configurados)
-	local finalStunTime = baseStunTime
+	-- Final stun time is already configured per charge level (no multiplier needed)
+	local stunDuration = baseStunTime
 
 	-- Debug output
 	print("---------------------------------------")
@@ -2805,16 +2819,15 @@ local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier, hitPart
 	print("   Power Level: " .. tostring(powerLevel))
 	print("   Hit Zone: " .. hitZone)
 	print("   Hit Part: " .. (hitPart and hitPart.Name or "N/A"))
-	print("   Base Stun:  " .. string.format("%.1f", baseStunTime) .. "s")
-	print("   Final Stun: " .. string.format("%.1f", finalStunTime) .. "s")
+	print("   Stun Duration: " .. string.format("%.1f", stunDuration) .. "s")
 	print("---------------------------------------")
 
 	-- Mark as stunned
 	npcModel:SetAttribute("Stunned", true)
-	npcModel:SetAttribute("StunEndTime", tick() + finalStunTime)
+	npcModel:SetAttribute("StunEndTime", tick() + stunDuration)
 
 	-- Create visual stun effect
-	CreateStunEffect(npcModel, finalStunTime, powerLevel)
+	CreateStunEffect(npcModel, stunDuration, powerLevel)
 
 	-- Play stun sound
 	local stunSound = Instance.new("Sound")
@@ -2826,11 +2839,11 @@ local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier, hitPart
 	Debris:AddItem(stunSound, 2)
 
 	-- Remove stun after duration
-	task.delay(finalStunTime, function()
+	task.delay(stunDuration, function()
 		if npcModel and npcModel.Parent then
 			npcModel:SetAttribute("Stunned", false)
 			npcModel:SetAttribute("StunEndTime", nil)
-			print("✅ " .. folderName .. " stun ended after " .. string.format("%.1f", finalStunTime) .. "s")
+			print("✅ " .. folderName .. " stun ended after " .. string.format("%.1f", stunDuration) .. "s")
 		end
 	end)
 end

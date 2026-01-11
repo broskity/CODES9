@@ -26,6 +26,8 @@ local SCREAMER_CONFIG = {
 	REWARD_SURVIVAL = 30,
 
 	-- STUN TIMES (Head vs Body differentiation)
+	-- NOTE: Duplicated across NPCs intentionally for independent configuration
+	-- Each NPC can have different stun resistances without shared dependencies
 	STUN_TIMES = {
 		-- Stun en el cuerpo (tiempos cortos)
 		BODY_CHARGE_1 = 0.2,  -- Carga baja
