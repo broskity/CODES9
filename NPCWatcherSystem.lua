@@ -1086,50 +1086,88 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	-- ---------------------------------------------------------------------------
 
 	local function PlayDeathEffect()
-		-- Desactivar part�culas
-		horrorParticles.Enabled = false
-		dripParticles.Enabled = false
-		shadowParticles.Enabled = false
-		irisParticles.Enabled = false
+		-- Marcar como muerto inmediatamente para detener el loop de IA
+		isAlive = false
+		
+		-- Desconectar el loop de IA para evitar que siga ejecutándose
+		if chaseConnection then
+			chaseConnection:Disconnect()
+			chaseConnection = nil
+		end
+		
+		-- Desactivar part�culas con verificación de seguridad
+		if horrorParticles and horrorParticles.Parent then
+			horrorParticles.Enabled = false
+		end
+		if dripParticles and dripParticles.Parent then
+			dripParticles.Enabled = false
+		end
+		if shadowParticles and shadowParticles.Parent then
+			shadowParticles.Enabled = false
+		end
+		if irisParticles and irisParticles.Parent then
+			irisParticles.Enabled = false
+		end
 
-		-- Detener sonidos
-		humSound: Stop()
-		heartbeatSound:Stop()
-		whisperSound:Stop()
+		-- Detener sonidos con verificación de seguridad
+		if humSound and humSound.Parent then
+			humSound:Stop()
+		end
+		if heartbeatSound and heartbeatSound.Parent then
+			heartbeatSound:Stop()
+		end
+		if whisperSound and whisperSound.Parent then
+			whisperSound:Stop()
+		end
 
-		local deathSound = CreateSound(WATCHER_SOUNDS.DEATH, eyeball)
-		deathSound:Play()
+		-- Guardar posición antes de que las partes puedan ser destruidas
+		local explosionPos = eyeball and eyeball.Parent and eyeball.Position or Vector3.new(0, 5, 0)
 
-		-- El iris explota primero
-		TweenService:Create(irisMain, TweenInfo.new(0.3), {
-			Size = Vector3.new(WATCHER_CONFIG.IRIS_SIZE * 2.5, WATCHER_CONFIG.IRIS_SIZE * 2.5, 0.3),
-			Color = Color3.new(1, 1, 1)
-		}):Play()
+		-- Crear sonido de muerte solo si el eyeball existe
+		local deathSound
+		if eyeball and eyeball.Parent then
+			deathSound = CreateSound(WATCHER_SOUNDS.DEATH, eyeball)
+			deathSound:Play()
+		end
 
-		TweenService:Create(irisLight, TweenInfo.new(0.3), {
-			Brightness = 15,
-			Range = 50
-		}):Play()
+		-- El iris explota primero (con verificación de seguridad)
+		if irisMain and irisMain.Parent then
+			TweenService:Create(irisMain, TweenInfo.new(0.3), {
+				Size = Vector3.new(WATCHER_CONFIG.IRIS_SIZE * 2.5, WATCHER_CONFIG.IRIS_SIZE * 2.5, 0.3),
+				Color = Color3.new(1, 1, 1)
+			}):Play()
+		end
 
-		TweenService:Create(pupilCore, TweenInfo.new(0.3), {
-			Size = Vector3.new(WATCHER_CONFIG.PUPIL_SIZE * 3, WATCHER_CONFIG.PUPIL_SIZE * 3, 0.3),
-			Transparency = 0.5
-		}):Play()
+		if irisLight and irisLight.Parent then
+			TweenService:Create(irisLight, TweenInfo.new(0.3), {
+				Brightness = 15,
+				Range = 50
+			}):Play()
+		end
 
-		TweenService:Create(pupilLight, TweenInfo.new(0.3), {
-			Brightness = 20,
-			Range = 40
-		}):Play()
+		if pupilCore and pupilCore.Parent then
+			TweenService:Create(pupilCore, TweenInfo.new(0.3), {
+				Size = Vector3.new(WATCHER_CONFIG.PUPIL_SIZE * 3, WATCHER_CONFIG.PUPIL_SIZE * 3, 0.3),
+				Transparency = 0.5
+			}):Play()
+		end
+
+		if pupilLight and pupilLight.Parent then
+			TweenService:Create(pupilLight, TweenInfo.new(0.3), {
+				Brightness = 20,
+				Range = 40
+			}):Play()
+		end
 
 		-- El ojo se hincha
-		TweenService:Create(eyeball, TweenInfo.new(0.4, Enum.EasingStyle.Back), {
-			Size = Vector3.new(WATCHER_CONFIG.EYE_SIZE * 1.4, WATCHER_CONFIG.EYE_SIZE * 1.4, WATCHER_CONFIG.EYE_SIZE * 1.4),
-			Color = WATCHER_CONFIG.VEIN_COLOR
-		}):Play()
+		if eyeball and eyeball.Parent then
+			TweenService:Create(eyeball, TweenInfo.new(0.4, Enum.EasingStyle.Back), {
+				Size = Vector3.new(WATCHER_CONFIG.EYE_SIZE * 1.4, WATCHER_CONFIG.EYE_SIZE * 1.4, WATCHER_CONFIG.EYE_SIZE * 1.4),
+				Color = WATCHER_CONFIG.VEIN_COLOR
+			}):Play()
+		end
 
 		task.wait(0.5)
-
-		local explosionPos = eyeball.Position
 
 		-- Explosi�n de luz
 		local burst = Instance.new("Part")
@@ -1148,36 +1186,49 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			Transparency = 1
 		}):Play()
 
-		-- Part�culas de gore
-		local goreEmitter = Instance.new("ParticleEmitter")
-		goreEmitter.Texture = "rbxassetid://243098098"
-		goreEmitter.Color = ColorSequence.new(WATCHER_CONFIG.VEIN_COLOR)
-		goreEmitter.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1),
-			NumberSequenceKeypoint.new(1, 0.2)
-		})
-		goreEmitter.Transparency = NumberSequence.new(0)
-		goreEmitter.Lifetime = NumberRange.new(1, 2)
-		goreEmitter.Rate = 0
-		goreEmitter.Speed = NumberRange.new(20, 40)
-		goreEmitter.SpreadAngle = Vector2.new(360, 360)
-		goreEmitter.Acceleration = Vector3.new(0, -50, 0)
-		goreEmitter.Parent = eyeball
-		goreEmitter: Emit(40)
+		-- Part�culas de gore con verificación
+		if eyeball and eyeball.Parent then
+			local goreEmitter = Instance.new("ParticleEmitter")
+			goreEmitter.Texture = "rbxassetid://243098098"
+			goreEmitter.Color = ColorSequence.new(WATCHER_CONFIG.VEIN_COLOR)
+			goreEmitter.Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(1, 0.2)
+			})
+			goreEmitter.Transparency = NumberSequence.new(0)
+			goreEmitter.Lifetime = NumberRange.new(1, 2)
+			goreEmitter.Rate = 0
+			goreEmitter.Speed = NumberRange.new(20, 40)
+			goreEmitter.SpreadAngle = Vector2.new(360, 360)
+			goreEmitter.Acceleration = Vector3.new(0, -50, 0)
+			goreEmitter.Parent = eyeball
+			goreEmitter:Emit(40)
+		end
 
-		-- Desvanecer todas las partes
-		for _, part in pairs(npcModel:GetDescendants()) do
-			if part:IsA("BasePart") then
-				TweenService:Create(part, TweenInfo.new(0.5), {
-					Size = Vector3.new(0.1, 0.1, 0.1),
-					Transparency = 1
-				}):Play()
+		-- Desvanecer todas las partes con verificación
+		if npcModel and npcModel.Parent then
+			for _, part in pairs(npcModel:GetDescendants()) do
+				if part:IsA("BasePart") then
+					TweenService:Create(part, TweenInfo.new(0.5), {
+						Size = Vector3.new(0.1, 0.1, 0.1),
+						Transparency = 1
+					}):Play()
+				end
 			end
 		end
 
 		Debris:AddItem(burst, 0.6)
-		task.wait(0.6)
-		Debris:AddItem(deathSound, 2)
+		task.wait(0.8)
+		
+		-- Limpiar sonido de muerte
+		if deathSound then
+			Debris:AddItem(deathSound, 2)
+		end
+		
+		-- Garantizar destrucción del NPC
+		if npcFolder and npcFolder.Parent then
+			npcFolder:Destroy()
+		end
 	end
 
 	-- ---------------------------------------------------------------------------
@@ -1298,13 +1349,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 
 		-- Verificar si est� en el lobby (zona segura)
 		if IsInLobby(npcX) then
-			isAlive = false
-			if chaseConnection then chaseConnection:Disconnect() end
 			PlayDeathEffect()
-			task.wait(0.8)
-			if npcFolder and npcFolder.Parent then
-				npcFolder: Destroy()
-			end
 			return
 		end
 
@@ -1367,12 +1412,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	coroutine.wrap(function()
 		task.wait(WATCHER_CONFIG.LIFETIME)
 		if npcFolder and npcFolder.Parent and isAlive then
-			isAlive = false
 			PlayDeathEffect()
-			task.wait(0.8)
-			if npcFolder and npcFolder.Parent then
-				npcFolder:Destroy()
-			end
 		end
 	end)()
 
