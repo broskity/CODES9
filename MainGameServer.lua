@@ -1,7 +1,7 @@
 --[[
     +------------------------------------------------------------------------------+
-    ¶                    INFINITE STREET - MAIN SERVER SCRIPT                       ¶
-    ¶                    VERSION 27 - 6 NPCs + CUSTOM EYE ANIMATIONS                ¶
+    ÔøΩ                    INFINITE STREET - MAIN SERVER SCRIPT                       ÔøΩ
+    ÔøΩ                    VERSION 27 - 6 NPCs + CUSTOM EYE ANIMATIONS                ÔøΩ
     +------------------------------------------------------------------------------+
 ]]
 
@@ -412,7 +412,7 @@ local CONFIG = {
 		"Whispers", "The Nothing", "Specters", "Abyss", "Twilight",
 		"Silence", "Ghosts", "Darkness", "The End", "Mist",
 		"Secrets", "Mystery", "Hidden", "Perdition", "Eternal",
-		"Dark CafÈ", "Fog Hotel", "Eclipse Bar", "Midnight Club",
+		"Dark CafÔøΩ", "Fog Hotel", "Eclipse Bar", "Midnight Club",
 		"Closed Shop", "Office 404", "Empty Studio", "Warehouse X",
 		"Room 13", "Suite Omega", "Clinic", "Dead Archive",
 		"???  ", "ERROR", "NULL", "VOID", "2:  47 AM", "For Rent", "5: 05",
@@ -1053,7 +1053,7 @@ local function CreateDoorWithVoid(doorX, faceZ, backZ, zDir, side, parent, build
 		table.insert(eyeLights, rightEyeLight)
 
 		-- SKULL MOUTH - 3 vertical rectangles (same size, closer to eyes)
-		local mouthY = eyeY - 0.4  -- M·s arriba (antes era -0.9)
+		local mouthY = eyeY - 0.4  -- MÔøΩs arriba (antes era -0.9)
 		local toothWidth = 0.12
 		local toothHeight = 0.4
 		local toothGap = 0.1
@@ -2290,8 +2290,8 @@ local function Init()
 end
 -- -------------------------------------------------------------------------------
 -- +------------------------------------------------------------------------------+
--- ¶            THROWABLE OBJECTS SYSTEM - WITH STUN SYSTEM                       ¶
--- ¶                         VERSI”N CORREGIDA                                    ¶
+-- ÔøΩ            THROWABLE OBJECTS SYSTEM - WITH STUN SYSTEM                       ÔøΩ
+-- ÔøΩ                         VERSIÔøΩN CORREGIDA                                    ÔøΩ
 -- +------------------------------------------------------------------------------+
 -- -------------------------------------------------------------------------------
 
@@ -2382,47 +2382,56 @@ local THROWABLE_CONFIG = {
 }
 
 -- -------------------------------------------------------------------------------
--- STUN TIMES PER NPC TYPE - °AQUÕ MODIFICAS LOS TIEMPOS! 
+-- STUN TIMES PER NPC TYPE - Con diferenciaci√≥n Head vs Body
 -- -------------------------------------------------------------------------------
 
 local NPC_STUN_TIMES = {
-	-- Format: ["FolderName"] = { BOTTLE = base_time, BRICK = base_time }
-	-- Estos son tiempos BASE, multiplicados por throw power (1.0x, 1.5x, 2.5x)
-
+	-- Format: ["FolderName"] = { 
+	--   HEAD = { CHARGE_1, CHARGE_2, CHARGE_3 },
+	--   BODY = { CHARGE_1, CHARGE_2, CHARGE_3 },
+	--   LEGACY_BOTTLE, LEGACY_BRICK (for NPCs without head/body differentiation)
+	-- }
+	
 	["ShadowEntity"] = {
-		BOTTLE = 10.2,
-		BRICK = 10.8,
+		-- Shadow no tiene diferenciaci√≥n head/body (usar legacy)
+		LEGACY_BOTTLE = 10.2,
+		LEGACY_BRICK = 10.8,
 	},
 
 	["CrawlerEntity"] = {
-		BOTTLE = 1.5,
-		BRICK = 2.2,
+		-- Crawler EXCLUIDO del sistema de diferenciaci√≥n head/body
+		LEGACY_BOTTLE = 1.5,
+		LEGACY_BRICK = 2.2,
 	},
 
 	["PhantomEntity"] = {
-		BOTTLE = 1.0,
-		BRICK = 1.5,
+		-- Phantom con diferenciaci√≥n head/body
+		HEAD = { 1.5, 2.5, 4.0 },  -- HEAD_CHARGE_1, HEAD_CHARGE_2, HEAD_CHARGE_3
+		BODY = { 0.2, 0.5, 1.0 },  -- BODY_CHARGE_1, BODY_CHARGE_2, BODY_CHARGE_3
 	},
 
 	["ScreamerEntity"] = {
-		BOTTLE = 0.8,
-		BRICK = 1.3,
+		-- Screamer con diferenciaci√≥n head/body
+		HEAD = { 1.5, 2.5, 4.0 },
+		BODY = { 0.2, 0.5, 1.0 },
 	},
 
 	["WatcherEntity_HolographicV5"] = {
-		BOTTLE = 1.4,
-		BRICK = 2.0,
+		-- Watcher con diferenciaci√≥n head/body
+		HEAD = { 1.5, 2.5, 4.0 },
+		BODY = { 0.2, 0.5, 1.0 },
 	},
 
 	["HarvesterEntity"] = {
-		BOTTLE = 0.6,
-		BRICK = 1.0,
+		-- Harvester con diferenciaci√≥n head/body
+		HEAD = { 1.5, 2.5, 4.0 },
+		BODY = { 0.2, 0.5, 1.0 },
 	},
 
-	-- Default para NPCs desconocidos
+	-- Default para NPCs desconocidos (sin diferenciaci√≥n)
 	["Default"] = {
-		BOTTLE = 1.0,
-		BRICK = 1.5,
+		LEGACY_BOTTLE = 1.0,
+		LEGACY_BRICK = 1.5,
 	},
 }
 
@@ -2681,26 +2690,38 @@ local function CreateStunEffect(npcModel, stunTime, powerLevel)
 	return stunFolder
 end
 
--- ------------------------------------------------------------------------------??
--- STUN NPC FUNCTION - °VERSI”N CORREGIDA QUE USA NPC_STUN_TIMES! 
+-- -------------------------------------------------------------------------------
+-- STUN NPC FUNCTION - Con detecci√≥n de Head vs Body
 -- -------------------------------------------------------------------------------
 
-local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier)
-	if not npcModel or not npcModel. Parent then return end
+-- Configuration: Head part name patterns for detection
+local HEAD_PART_PATTERNS = {
+	"Head", "Skull", "Eye", "Face", "Jaw", 
+	"Mouth", "Hood", "Void", "Brow", "Cranium"
+}
+
+-- Configuration: Head part names to search for in model
+local HEAD_PART_NAMES = {
+	"HeadMain", "Head", "Eyeball", "VoidFace", 
+	"HoodBack", "SkullMain"
+}
+
+local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier, hitPart)
+	if not npcModel or not npcModel.Parent then return end
 
 	-- Check if already stunned
-	if npcModel: GetAttribute("Stunned") then 
+	if npcModel:GetAttribute("Stunned") then 
 		-- Extend stun time if hit again while stunned
-		local currentStunEnd = npcModel: GetAttribute("StunEndTime") or 0
+		local currentStunEnd = npcModel:GetAttribute("StunEndTime") or 0
 		local bonusTime = 0.5 * stunMultiplier
 		local newStunEnd = math.max(currentStunEnd, tick() + bonusTime)
 		npcModel:SetAttribute("StunEndTime", newStunEnd)
-		print("? Extended stun by " .. string.format("%.1f", bonusTime) .. "s")
+		print("‚è± Extended stun by " .. string.format("%.1f", bonusTime) .. "s")
 		return 
 	end
 
 	-- Get NPC folder name to determine stun time
-	local npcFolder = npcModel. Parent
+	local npcFolder = npcModel.Parent
 	local folderName = "Default"
 
 	if npcFolder and npcFolder:IsA("Folder") then
@@ -2711,52 +2732,118 @@ local function StunNPC(npcModel, objectType, powerLevel, stunMultiplier)
 	local npcStunConfig = NPC_STUN_TIMES[folderName]
 	if not npcStunConfig then
 		npcStunConfig = NPC_STUN_TIMES["Default"]
-		warn("?? NPC type '" .. folderName .. "' not found in NPC_STUN_TIMES, using Default")
+		warn("‚ö†Ô∏è NPC type '" .. folderName .. "' not found in NPC_STUN_TIMES, using Default")
 	end
 
-	-- Get base stun time for this object type (BOTTLE or BRICK)
-	local baseStunTime = npcStunConfig[objectType]
-	if not baseStunTime then
-		baseStunTime = objectType == "BOTTLE" and 1.0 or 1.5
-		warn("?? Object type '" .. tostring(objectType) .. "' not found, using fallback")
+	local baseStunTime = 1.0
+	local hitZone = "UNKNOWN"
+	
+	-- -----------------------------------------------------------------------
+	-- DETECCI√ìN HEAD vs BODY (solo para NPCs con configuraci√≥n HEAD/BODY)
+	-- -----------------------------------------------------------------------
+	
+	if npcStunConfig.HEAD and npcStunConfig.BODY then
+		-- Este NPC tiene diferenciaci√≥n head/body
+		local isHeadHit = false
+		
+		-- Detectar si el golpe fue en la cabeza basado en la parte golpeada o posici√≥n Y
+		if hitPart then
+			local hitPartName = hitPart.Name
+			
+			-- Verificar si golpe√≥ directamente una parte de la cabeza usando patrones configurados
+			for _, pattern in ipairs(HEAD_PART_PATTERNS) do
+				if hitPartName:find(pattern) then
+					isHeadHit = true
+					break
+				end
+			end
+			
+			if not isHeadHit then
+				-- Si no es una parte clara de cabeza, usar detecci√≥n por posici√≥n Y
+				local headPart = nil
+				for _, partName in ipairs(HEAD_PART_NAMES) do
+					headPart = npcModel:FindFirstChild(partName)
+					if headPart then break end
+				end
+				
+				if headPart and hitPart.Position then
+					-- Si el impacto est√° cerca de la altura de la cabeza (dentro de un rango)
+					local headY = headPart.Position.Y
+					local hitY = hitPart.Position.Y
+					local heightDiff = math.abs(hitY - headY)
+					
+					-- Si el golpe est√° dentro de 2 studs de la cabeza, contar como head hit
+					if heightDiff < 2.5 then
+						isHeadHit = true
+					end
+				end
+			end
+		end
+		
+		-- Determinar el √≠ndice de carga (1=LIGHT, 2=MEDIUM, 3=STRONG)
+		local chargeIndex = 1
+		if powerLevel == "MEDIUM" then
+			chargeIndex = 2
+		elseif powerLevel == "STRONG" then
+			chargeIndex = 3
+		end
+		
+		-- Obtener el tiempo base seg√∫n si fue head o body
+		if isHeadHit then
+			baseStunTime = npcStunConfig.HEAD[chargeIndex]
+			hitZone = "HEAD"
+		else
+			baseStunTime = npcStunConfig.BODY[chargeIndex]
+			hitZone = "BODY"
+		end
+		
+	else
+		-- NPC con sistema legacy (Shadow, Crawler, o Default)
+		-- Usar LEGACY_BOTTLE o LEGACY_BRICK
+		if objectType == "BOTTLE" then
+			baseStunTime = npcStunConfig.LEGACY_BOTTLE or 1.0
+		else
+			baseStunTime = npcStunConfig.LEGACY_BRICK or 1.5
+		end
+		hitZone = "LEGACY"
 	end
 
-	-- Calculate final stun time
-	local finalStunTime = baseStunTime * stunMultiplier
+	-- Final stun time is already configured per charge level (no multiplier needed)
+	local stunDuration = baseStunTime
 
 	-- Debug output
 	print("---------------------------------------")
-	print("? STUN APPLIED!")
+	print("üí• STUN APPLIED!")
 	print("   NPC Folder: " .. folderName)
 	print("   Object Type: " .. tostring(objectType))
 	print("   Power Level: " .. tostring(powerLevel))
-	print("   Base Stun:  " .. string.format("%.1f", baseStunTime) .. "s")
-	print("   Multiplier: " ..  string.format("%.1f", stunMultiplier) .. "x")
-	print("   Final Stun: " .. string.format("%.1f", finalStunTime) .. "s")
+	print("   Hit Zone: " .. hitZone)
+	print("   Hit Part: " .. (hitPart and hitPart.Name or "N/A"))
+	print("   Stun Duration: " .. string.format("%.1f", stunDuration) .. "s")
 	print("---------------------------------------")
 
 	-- Mark as stunned
 	npcModel:SetAttribute("Stunned", true)
-	npcModel:SetAttribute("StunEndTime", tick() + finalStunTime)
+	npcModel:SetAttribute("StunEndTime", tick() + stunDuration)
 
 	-- Create visual stun effect
-	CreateStunEffect(npcModel, finalStunTime, powerLevel)
+	CreateStunEffect(npcModel, stunDuration, powerLevel)
 
 	-- Play stun sound
-	local stunSound = Instance. new("Sound")
+	local stunSound = Instance.new("Sound")
 	stunSound.SoundId = "rbxassetid://3932505367"
 	stunSound.Volume = 0.7
-	stunSound. PlaybackSpeed = 1.2
-	stunSound. Parent = npcModel
+	stunSound.PlaybackSpeed = 1.2
+	stunSound.Parent = npcModel
 	stunSound:Play()
-	Debris: AddItem(stunSound, 2)
+	Debris:AddItem(stunSound, 2)
 
 	-- Remove stun after duration
-	task.delay(finalStunTime, function()
+	task.delay(stunDuration, function()
 		if npcModel and npcModel.Parent then
 			npcModel:SetAttribute("Stunned", false)
 			npcModel:SetAttribute("StunEndTime", nil)
-			print("? " .. folderName .. " stun ended after " .. string.format("%.1f", finalStunTime) .. "s")
+			print("‚úÖ " .. folderName .. " stun ended after " .. string.format("%.1f", stunDuration) .. "s")
 		end
 	end)
 end
@@ -2994,12 +3081,12 @@ local function ThrowObject(player, holdTime, aimDirection)
 		end
 
 		-- -------------------------------------------------------------------
-		-- APPLY STUN TO NPC - °LLAMADA CORREGIDA! 
+		-- APPLY STUN TO NPC - Con detecci√≥n de Head vs Body
 		-- -------------------------------------------------------------------
 
 		if isNPC and npcModel and not isPlayer then
-			-- Pasar:  npcModel, objectType ("BOTTLE" o "BRICK"), powerLevel ("LIGHT"/"MEDIUM"/"STRONG"), multiplier
-			StunNPC(npcModel, objectType, powerLevel, power.STUN_MULTIPLIER)
+			-- Pasar: npcModel, objectType ("BOTTLE" o "BRICK"), powerLevel ("LIGHT"/"MEDIUM"/"STRONG"), multiplier, hitPart
+			StunNPC(npcModel, objectType, powerLevel, power.STUN_MULTIPLIER, hit)
 		end
 
 		-- Break effect for bottles
