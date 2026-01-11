@@ -1120,6 +1120,9 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			whisperSound:Stop()
 		end
 
+		-- Guardar posición antes de que las partes puedan ser destruidas
+		local explosionPos = eyeball and eyeball.Parent and eyeball.Position or Vector3.new(0, 5, 0)
+
 		-- Crear sonido de muerte solo si el eyeball existe
 		local deathSound
 		if eyeball and eyeball.Parent then
@@ -1165,8 +1168,6 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		end
 
 		task.wait(0.5)
-
-		local explosionPos = eyeball and eyeball.Parent and eyeball.Position or Vector3.new(0, 0, 0)
 
 		-- Explosi�n de luz
 		local burst = Instance.new("Part")
