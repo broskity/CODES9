@@ -1,8 +1,8 @@
 --[[
     +------------------------------------------------------------------------------+
-    ¦                        NPC WATCHER ENTITY SYSTEM                              ¦
-    ¦                    VERSIÓN 5.0 - HOLOGRAPHIC FLOATING IRIS                    ¦
-    ¦              IRIS Y PUPILA FLOTANTES FUERA DEL OJO FÍSICO                     ¦
+    ï¿½                        NPC WATCHER ENTITY SYSTEM                              ï¿½
+    ï¿½                    VERSIï¿½N 5.0 - HOLOGRAPHIC FLOATING IRIS                    ï¿½
+    ï¿½              IRIS Y PUPILA FLOTANTES FUERA DEL OJO Fï¿½SICO                     ï¿½
     +------------------------------------------------------------------------------+
 ]]
 
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local SpawnWatcherEvent = ReplicatedStorage:WaitForChild("SpawnWatcherEvent", 10)
 
 -- -------------------------------------------------------------------------------
--- CONFIGURACIÓN DEL WATCHER
+-- CONFIGURACIï¿½N DEL WATCHER
 -- -------------------------------------------------------------------------------
 local WATCHER_CONFIG = {
 	-- STATS DE COMBATE
@@ -25,29 +25,43 @@ local WATCHER_CONFIG = {
 	ATTACK_RANGE = 28,
 	DETECTION_RANGE = 400,
 	LIFETIME = 65,
+	REWARD_SURVIVAL = 35,
 
-	-- CONFIGURACIÓN DEL RAYO
+	-- STUN TIMES (Head vs Body differentiation)
+	STUN_TIMES = {
+		-- Stun en el cuerpo (tiempos cortos)
+		BODY_CHARGE_1 = 0.2,  -- Carga baja
+		BODY_CHARGE_2 = 0.5,  -- Carga media
+		BODY_CHARGE_3 = 1.0,  -- Carga alta
+		
+		-- Stun en la cabeza (tiempos largos, fÃ¡ciles de modificar)
+		HEAD_CHARGE_1 = 1.5,  -- Carga baja
+		HEAD_CHARGE_2 = 2.5,  -- Carga media
+		HEAD_CHARGE_3 = 4.0,  -- Carga alta
+	},
+
+	-- CONFIGURACIï¿½N DEL RAYO
 	BEAM_CHARGE_TIME = 1.5,
 	BEAM_DURATION = 0.8,
 	PARALYZE_DURATION = 2.0,
 	BEAM_WIDTH = 0.8,
 
-	-- TAMAÑO DEL OJO
+	-- TAMAï¿½O DEL OJO
 	EYE_SIZE = 5.0,
 
-	-- COLORES DEL OJO FÍSICO (NO BRILLA)
+	-- COLORES DEL OJO Fï¿½SICO (NO BRILLA)
 	SCLERA_COLOR = Color3.fromRGB(235, 230, 215),
 	SCLERA_INFECTED = Color3.fromRGB(180, 160, 140),
 	VEIN_COLOR = Color3.fromRGB(120, 20, 30),
 	VEIN_PULSE = Color3.fromRGB(200, 50, 50),
 
-	-- COLORES DEL IRIS HOLOGRÁFICO FLOTANTE (BRILLA)
+	-- COLORES DEL IRIS HOLOGRï¿½FICO FLOTANTE (BRILLA)
 	IRIS_OUTER_COLOR = Color3.fromRGB(180, 30, 0),
 	IRIS_MAIN_COLOR = Color3.fromRGB(255, 80, 0),
 	IRIS_INNER_COLOR = Color3.fromRGB(255, 150, 50),
 	IRIS_GLOW_COLOR = Color3.fromRGB(255, 200, 100),
 
-	-- COLORES DE LA PUPILA HOLOGRÁFICA (BRILLA)
+	-- COLORES DE LA PUPILA HOLOGRï¿½FICA (BRILLA)
 	PUPIL_CORE_COLOR = Color3.fromRGB(0, 0, 0),
 	PUPIL_RING_COLOR = Color3.fromRGB(255, 100, 0),
 
@@ -61,7 +75,7 @@ local WATCHER_CONFIG = {
 	PARTICLE_COLOR = Color3.fromRGB(150, 30, 30),
 	SHADOW_COLOR = Color3.fromRGB(20, 0, 30),
 
-	-- ANIMACIÓN
+	-- ANIMACIï¿½N
 	FLOAT_SPEED = 1.2,
 	FLOAT_AMPLITUDE = 0.8,
 	PULSE_SPEED = 2.5,
@@ -158,7 +172,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	local floatHeight = 5.0
 
 	-- ---------------------------------------------------------------------------
-	-- OJO FÍSICO - NO BRILLA, ES OPACO Y ORGÁNICO
+	-- OJO Fï¿½SICO - NO BRILLA, ES OPACO Y ORGï¿½NICO
 	-- ---------------------------------------------------------------------------
 
 	-- Aura oscura alrededor del ojo
@@ -173,7 +187,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	auraShell.CanCollide = false
 	auraShell.Parent = npcModel
 
-	-- Partículas de sombra
+	-- Partï¿½culas de sombra
 	local shadowParticles = Instance.new("ParticleEmitter")
 	shadowParticles.Texture = "rbxassetid://243098098"
 	shadowParticles.Color = ColorSequence.new({
@@ -207,7 +221,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	eyeball.CanCollide = true
 	eyeball.Parent = npcModel
 
-	-- Capa húmeda/brillosa sutil
+	-- Capa hï¿½meda/brillosa sutil
 	local glossLayer = Instance.new("Part")
 	glossLayer.Name = "GlossLayer"
 	glossLayer.Size = Vector3.new(WATCHER_CONFIG.EYE_SIZE * 1.01, WATCHER_CONFIG.EYE_SIZE * 1.01, WATCHER_CONFIG.EYE_SIZE * 1.01)
@@ -219,7 +233,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	glossLayer.CanCollide = false
 	glossLayer.Parent = npcModel
 
-	-- Marca oscura donde estaría el iris (en el ojo físico)
+	-- Marca oscura donde estarï¿½a el iris (en el ojo fï¿½sico)
 	local irisSocket = Instance.new("Part")
 	irisSocket.Name = "IrisSocket"
 	irisSocket.Size = Vector3.new(WATCHER_CONFIG.EYE_SIZE * 0.5, WATCHER_CONFIG.EYE_SIZE * 0.5, 0.1)
@@ -232,7 +246,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	irisSocket.Parent = npcModel
 
 	-- ---------------------------------------------------------------------------
-	-- VENAS SANGUÍNEAS - PULSANTES
+	-- VENAS SANGUï¿½NEAS - PULSANTES
 	-- ---------------------------------------------------------------------------
 
 	local veins = {}
@@ -283,7 +297,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	end
 
 	-- ---------------------------------------------------------------------------
-	-- ??? IRIS HOLOGRÁFICO FLOTANTE - BRILLA Y SIGUE AL JUGADOR ???
+	-- ??? IRIS HOLOGRï¿½FICO FLOTANTE - BRILLA Y SIGUE AL JUGADOR ???
 	-- ---------------------------------------------------------------------------
 
 	-- Contenedor invisible para el iris flotante
@@ -301,7 +315,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	irisOuter.Size = Vector3.new(WATCHER_CONFIG.IRIS_SIZE * 1.2, WATCHER_CONFIG.IRIS_SIZE * 1.2, 0.08)
 	irisOuter.Shape = Enum.PartType.Cylinder
 	irisOuter.Color = WATCHER_CONFIG.IRIS_OUTER_COLOR
-	irisOuter.Material = Enum.Material.Neon -- ¡BRILLA! 
+	irisOuter.Material = Enum.Material.Neon -- ï¿½BRILLA! 
 	irisOuter.Transparency = 0.1
 	irisOuter.Anchored = true
 	irisOuter.CanCollide = false
@@ -313,7 +327,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	irisMain.Size = Vector3.new(WATCHER_CONFIG.IRIS_SIZE, WATCHER_CONFIG.IRIS_SIZE, 0.12)
 	irisMain.Shape = Enum.PartType.Cylinder
 	irisMain.Color = WATCHER_CONFIG.IRIS_MAIN_COLOR
-	irisMain.Material = Enum.Material.Neon -- ¡BRILLA!
+	irisMain.Material = Enum.Material.Neon -- ï¿½BRILLA!
 	irisMain.Transparency = 0
 	irisMain.Anchored = true
 	irisMain.CanCollide = false
@@ -334,7 +348,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	irisInner.Size = Vector3.new(WATCHER_CONFIG.IRIS_SIZE * 0.7, WATCHER_CONFIG.IRIS_SIZE * 0.7, 0.15)
 	irisInner.Shape = Enum.PartType.Cylinder
 	irisInner.Color = WATCHER_CONFIG.IRIS_INNER_COLOR
-	irisInner.Material = Enum.Material.Neon -- ¡BRILLA!
+	irisInner.Material = Enum.Material.Neon -- ï¿½BRILLA!
 	irisInner.Transparency = 0
 	irisInner.Anchored = true
 	irisInner.CanCollide = false
@@ -353,7 +367,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	irisGlow.Parent = npcModel
 
 	-- ---------------------------------------------------------------------------
-	-- ??? PUPILA HOLOGRÁFICA FLOTANTE - BRILLA Y SIGUE AL JUGADOR ???
+	-- ??? PUPILA HOLOGRï¿½FICA FLOTANTE - BRILLA Y SIGUE AL JUGADOR ???
 	-- ---------------------------------------------------------------------------
 
 	-- Anillo de la pupila - NEON (BRILLA)
@@ -362,7 +376,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	pupilRing.Size = Vector3.new(WATCHER_CONFIG.PUPIL_SIZE * 1.3, WATCHER_CONFIG.PUPIL_SIZE * 1.3, 0.18)
 	pupilRing.Shape = Enum.PartType.Cylinder
 	pupilRing.Color = WATCHER_CONFIG.PUPIL_RING_COLOR
-	pupilRing.Material = Enum.Material.Neon -- ¡BRILLA!
+	pupilRing.Material = Enum.Material.Neon -- ï¿½BRILLA!
 	pupilRing.Transparency = 0.2
 	pupilRing.Anchored = true
 	pupilRing.CanCollide = false
@@ -402,7 +416,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	pupilReflection.Parent = npcModel
 
 	-- ---------------------------------------------------------------------------
-	-- PARTÍCULAS HOLOGRÁFICAS DEL IRIS
+	-- PARTï¿½CULAS HOLOGRï¿½FICAS DEL IRIS
 	-- ---------------------------------------------------------------------------
 
 	local irisParticles = Instance.new("ParticleEmitter")
@@ -430,7 +444,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	irisParticles.SpreadAngle = Vector2.new(360, 360)
 	irisParticles.Parent = irisMain
 
-	-- Energía flotando entre el ojo y el iris
+	-- Energï¿½a flotando entre el ojo y el iris
 	local energyBeam = Instance.new("Part")
 	energyBeam.Name = "EnergyBeam"
 	energyBeam.Size = Vector3.new(0.15, 0.15, WATCHER_CONFIG.IRIS_FLOAT_DISTANCE)
@@ -442,7 +456,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	energyBeam.Parent = npcModel
 
 	-- ---------------------------------------------------------------------------
-	-- PÁRPADOS
+	-- Pï¿½RPADOS
 	-- ---------------------------------------------------------------------------
 
 	local eyelidTop = Instance.new("Part")
@@ -466,7 +480,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	eyelidBottom.Parent = npcModel
 
 	-- ---------------------------------------------------------------------------
-	-- TENTÁCULOS
+	-- TENTï¿½CULOS
 	-- ---------------------------------------------------------------------------
 
 	local tentacles = {}
@@ -525,7 +539,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	end
 
 	-- ---------------------------------------------------------------------------
-	-- PARTÍCULAS DEL OJO
+	-- PARTï¿½CULAS DEL OJO
 	-- ---------------------------------------------------------------------------
 
 	local horrorParticles = Instance.new("ParticleEmitter")
@@ -593,7 +607,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	whisperSound: Play()
 
 	-- ---------------------------------------------------------------------------
-	-- ESTADO DE ANIMACIÓN
+	-- ESTADO DE ANIMACIï¿½N
 	-- ---------------------------------------------------------------------------
 
 	local npcX = spawnPosition.X
@@ -601,11 +615,11 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	local floatTime = 0
 	local pulseTime = 0
 
-	-- Dirección actual y objetivo del iris (para seguir al jugador)
+	-- Direcciï¿½n actual y objetivo del iris (para seguir al jugador)
 	local currentIrisDirection = Vector3.new(0, 0, 1)
 	local targetIrisDirection = Vector3.new(0, 0, 1)
 
-	-- Tamaño de pupila dinámico
+	-- Tamaï¿½o de pupila dinï¿½mico
 	local currentPupilScale = 1
 	local targetPupilScale = 1
 
@@ -614,7 +628,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	local isBlinking = false
 
 	-- ---------------------------------------------------------------------------
-	-- ANIMACIÓN DE PARPADEO
+	-- ANIMACIï¿½N DE PARPADEO
 	-- ---------------------------------------------------------------------------
 
 	local function DoBlink()
@@ -658,7 +672,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	end
 
 	-- ---------------------------------------------------------------???-----------
-	-- ACTUALIZAR POSICIÓN Y ANIMACIÓN
+	-- ACTUALIZAR POSICIï¿½N Y ANIMACIï¿½N
 	-- ---------------------------------------------------------------------------
 
 	local function UpdateNPCPosition(x, z, targetPosition, deltaTime)
@@ -669,18 +683,18 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			floatTime = floatTime + deltaTime * WATCHER_CONFIG.FLOAT_SPEED
 			pulseTime = pulseTime + deltaTime * WATCHER_CONFIG.PULSE_SPEED
 
-			-- Interpolar la dirección del iris hacia el objetivo
+			-- Interpolar la direcciï¿½n del iris hacia el objetivo
 			currentIrisDirection = LerpVector3(
 				currentIrisDirection, 
 				targetIrisDirection, 
 				deltaTime * WATCHER_CONFIG.IRIS_TRACK_SPEED
 			).Unit
 
-			-- Interpolar tamaño de pupila
+			-- Interpolar tamaï¿½o de pupila
 			currentPupilScale = Lerp(currentPupilScale, targetPupilScale, deltaTime * 5)
 		end
 
-		-- Posición flotante del ojo
+		-- Posiciï¿½n flotante del ojo
 		local floatY = groundY + floatHeight 
 			+ math.sin(floatTime) * WATCHER_CONFIG.FLOAT_AMPLITUDE
 			+ math.sin(floatTime * 1.7) * WATCHER_CONFIG.FLOAT_AMPLITUDE * 0.3
@@ -693,7 +707,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		local eyePos = Vector3.new(x + wobbleX, floatY, z + wobbleZ)
 		local eyeCFrame = CFrame.new(eyePos) * CFrame.Angles(tiltX, 0, tiltZ)
 
-		-- Posicionar el ojo físico
+		-- Posicionar el ojo fï¿½sico
 		eyeball.CFrame = eyeCFrame
 		glossLayer.CFrame = eyeCFrame
 		auraShell.CFrame = CFrame.new(eyePos)
@@ -706,16 +720,16 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			WATCHER_CONFIG.EYE_SIZE * 1.5 * auraPulse
 		)
 
-		-- Actualizar dirección objetivo si hay target
+		-- Actualizar direcciï¿½n objetivo si hay target
 		if targetPosition then
 			local dirToTarget = (targetPosition - eyePos)
 			if dirToTarget.Magnitude > 0.1 then
 				targetIrisDirection = dirToTarget.Unit
 			end
-			targetPupilScale = 1.1 -- Pupila más grande cuando mira a alguien
+			targetPupilScale = 1.1 -- Pupila mï¿½s grande cuando mira a alguien
 		else
 			targetIrisDirection = Vector3.new(0, 0, 1)
-			targetPupilScale = 0.9 -- Pupila más pequeña en reposo
+			targetPupilScale = 0.9 -- Pupila mï¿½s pequeï¿½a en reposo
 		end
 
 		-- -----------------------------------------------------------------------
@@ -728,10 +742,10 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		irisSocket.CFrame = socketCFrame
 
 		-- ------------------------------------??----------------------------------
-		-- ??? IRIS HOLOGRÁFICO FLOTANTE - SIGUE AL JUGADOR ???
+		-- ??? IRIS HOLOGRï¿½FICO FLOTANTE - SIGUE AL JUGADOR ???
 		-- -----------------------------------------------------------------------
 
-		-- Posición del iris flotando FUERA del ojo
+		-- Posiciï¿½n del iris flotando FUERA del ojo
 		local irisFloatPos = eyePos + currentIrisDirection * (eyeRadius + WATCHER_CONFIG.IRIS_FLOAT_DISTANCE)
 		local irisCFrame = CFrame.new(irisFloatPos, irisFloatPos + currentIrisDirection) * CFrame.Angles(0, math.rad(90), 0)
 
@@ -740,7 +754,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		local pulse2 = 1 + math.sin(pulseTime * 2.5 + 0.5) * 0.08
 		local pulse3 = 1 + math.sin(pulseTime * 3 + 1) * 0.1
 
-		-- Posicionar capas del iris (de atrás hacia adelante)
+		-- Posicionar capas del iris (de atrï¿½s hacia adelante)
 		local layerOffset = 0.03
 
 		irisGlow.CFrame = irisCFrame * CFrame.new(-layerOffset * 3, 0, 0)
@@ -756,10 +770,10 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		irisInner.Size = Vector3.new(WATCHER_CONFIG.IRIS_SIZE * 0.7 * pulse3, WATCHER_CONFIG.IRIS_SIZE * 0.7 * pulse3, 0.15)
 
 		-- -----------------------------------------------------------------------
-		-- ??? PUPILA HOLOGRÁFICA FLOTANTE - SIGUE AL JUGADOR ???
+		-- ??? PUPILA HOLOGRï¿½FICA FLOTANTE - SIGUE AL JUGADOR ???
 		-- -----------------------------------------------------------------------
 
-		-- La pupila está ligeramente más adelante que el iris
+		-- La pupila estï¿½ ligeramente mï¿½s adelante que el iris
 		local pupilOffset = layerOffset * 2
 
 		pupilRing.CFrame = irisCFrame * CFrame.new(pupilOffset, 0, 0)
@@ -776,7 +790,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			0.2
 		)
 
-		-- Reflejo en posición ligeramente offset
+		-- Reflejo en posiciï¿½n ligeramente offset
 		local reflectionOffset = Vector3.new(WATCHER_CONFIG.PUPIL_SIZE * 0.2, WATCHER_CONFIG.PUPIL_SIZE * 0.2, 0)
 		pupilReflection.CFrame = irisCFrame * CFrame.new(pupilOffset + layerOffset * 2, 0, 0) * CFrame.new(reflectionOffset)
 
@@ -784,7 +798,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		irisAnchor.CFrame = irisCFrame
 
 		-- -----------------------------------------------------------------------
-		-- RAYO DE ENERGÍA ENTRE OJO E IRIS
+		-- RAYO DE ENERGï¿½A ENTRE OJO E IRIS
 		-- -----------------------------------------------------------------------
 
 		local beamStart = socketPos
@@ -834,14 +848,14 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		end
 
 		-- -----------------------------------------------------------------------
-		-- PÁRPADOS
+		-- Pï¿½RPADOS
 		-- -----------------------------------------------------------------------
 
 		eyelidTop.CFrame = CFrame.new(eyePos + Vector3.new(0, WATCHER_CONFIG.EYE_SIZE * 0.35, 0) + currentIrisDirection * WATCHER_CONFIG.EYE_SIZE * 0.2)
 		eyelidBottom.CFrame = CFrame.new(eyePos + Vector3.new(0, -WATCHER_CONFIG.EYE_SIZE * 0.3, 0) + currentIrisDirection * WATCHER_CONFIG.EYE_SIZE * 0.2)
 
 		-- -----------------------------------------------------------------------
-		-- TENTÁCULOS
+		-- TENTï¿½CULOS
 		-- -----------------------------------------------------------------------
 
 		for _, tentData in ipairs(tentacles) do
@@ -873,7 +887,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		end
 	end
 
-	-- Inicializar posición
+	-- Inicializar posiciï¿½n
 	UpdateNPCPosition(npcX, npcZ, nil, 0)
 
 	-- ---------------------------------------------------------------------------
@@ -888,7 +902,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			local whisperIntensity = math.clamp(1 - (nearestDistance / 40), 0, 1)
 			whisperSound.Volume = WATCHER_SOUNDS.WHISPER.volume * whisperIntensity
 
-			-- Pupila reacciona a la cercanía
+			-- Pupila reacciona a la cercanï¿½a
 			if nearestDistance < 30 then
 				targetPupilScale = 1 + (1 - nearestDistance / 30) * 0.3
 			end
@@ -979,7 +993,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		beam.CFrame = CFrame.new(beamStart + beamDir * beamLength / 2, beamStart + beamDir * beamLength)
 		beam.Parent = effectsFolder
 
-		-- Núcleo del rayo
+		-- Nï¿½cleo del rayo
 		local beamCore = Instance.new("Part")
 		beamCore.Name = "BeamCore"
 		beamCore.Size = Vector3.new(WATCHER_CONFIG.BEAM_WIDTH * 0.4, WATCHER_CONFIG.BEAM_WIDTH * 0.4, beamLength)
@@ -1072,7 +1086,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	-- ---------------------------------------------------------------------------
 
 	local function PlayDeathEffect()
-		-- Desactivar partículas
+		-- Desactivar partï¿½culas
 		horrorParticles.Enabled = false
 		dripParticles.Enabled = false
 		shadowParticles.Enabled = false
@@ -1117,7 +1131,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 
 		local explosionPos = eyeball.Position
 
-		-- Explosión de luz
+		-- Explosiï¿½n de luz
 		local burst = Instance.new("Part")
 		burst.Size = Vector3.new(2, 2, 2)
 		burst.Shape = Enum.PartType.Ball
@@ -1134,7 +1148,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 			Transparency = 1
 		}):Play()
 
-		-- Partículas de gore
+		-- Partï¿½culas de gore
 		local goreEmitter = Instance.new("ParticleEmitter")
 		goreEmitter.Texture = "rbxassetid://243098098"
 		goreEmitter.Color = ColorSequence.new(WATCHER_CONFIG.VEIN_COLOR)
@@ -1167,7 +1181,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 	end
 
 	-- ---------------------------------------------------------------------------
-	-- BUSCAR JUGADOR MÁS CERCANO
+	-- BUSCAR JUGADOR Mï¿½S CERCANO
 	-- ---------------------------------------------???-----------------------------
 
 	local function FindNearestPlayer()
@@ -1282,7 +1296,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		end
 		-- -----------------------------------------------------------------------
 
-		-- Verificar si está en el lobby (zona segura)
+		-- Verificar si estï¿½ en el lobby (zona segura)
 		if IsInLobby(npcX) then
 			isAlive = false
 			if chaseConnection then chaseConnection:Disconnect() end
@@ -1347,7 +1361,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 		end
 	end)
 	-- ---------------------------------------------------------------------------
-	-- LÍMITE DE TIEMPO DE VIDA
+	-- Lï¿½MITE DE TIEMPO DE VIDA
 	-- ---------------------------------------------------------------------------
 
 	coroutine.wrap(function()
@@ -1381,7 +1395,7 @@ local function CreateWatcherNPC(spawnPosition, triggerPlayer, side, zDir)
 end
 
 -- -------------------------------------------------------------------------------
--- CONEXIÓN DEL EVENTO
+-- CONEXIï¿½N DEL EVENTO
 -- -------------------------------------------------------------------------------
 
 if SpawnWatcherEvent then
@@ -1391,9 +1405,9 @@ if SpawnWatcherEvent then
 	end)
 	print("---------------------------------------------------------------")
 	print("  ??? NPC WATCHER SYSTEM V5.0 - HOLOGRAPHIC FLOATING IRIS ???   ")
-	print("     ? Iris y Pupila flotan ~20cm fuera del ojo físico ?      ")
+	print("     ? Iris y Pupila flotan ~20cm fuera del ojo fï¿½sico ?      ")
 	print("     ? Solo el iris y pupila brillan (Material Neon) ?        ")
-	print("     ? El ojo físico es opaco (SmoothPlastic) ?               ")
+	print("     ? El ojo fï¿½sico es opaco (SmoothPlastic) ?               ")
 	print("     ? Iris y pupila siguen al jugador objetivo ?             ")
 	print("--??------------------------------------------------------------")
 else

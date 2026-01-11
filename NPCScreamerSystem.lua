@@ -1,7 +1,7 @@
 --[[
     +------------------------------------------------------------------------------+
-    ¦                        NPC SCREAMER ENTITY SYSTEM                             ¦
-    ¦                    VERSIÓN 3 - ENHANCED TITAN HORROR                          ¦
+    ï¿½                        NPC SCREAMER ENTITY SYSTEM                             ï¿½
+    ï¿½                    VERSIï¿½N 3 - ENHANCED TITAN HORROR                          ï¿½
     +------------------------------------------------------------------------------+
 ]]
 
@@ -14,7 +14,7 @@ local Debris = game:GetService("Debris")
 local SpawnScreamerEvent = ReplicatedStorage:WaitForChild("SpawnScreamerEvent", 10)
 
 -- -------------------------------------------------------------------------------
--- CONFIGURACIÓN DEL SCREAMER
+-- CONFIGURACIï¿½N DEL SCREAMER
 -- -------------------------------------------------------------------------------
 local SCREAMER_CONFIG = {
 	SPEED = 20,
@@ -23,6 +23,20 @@ local SCREAMER_CONFIG = {
 	ATTACK_RANGE = 12,
 	DETECTION_RANGE = 300,
 	LIFETIME = 45,
+	REWARD_SURVIVAL = 30,
+
+	-- STUN TIMES (Head vs Body differentiation)
+	STUN_TIMES = {
+		-- Stun en el cuerpo (tiempos cortos)
+		BODY_CHARGE_1 = 0.2,  -- Carga baja
+		BODY_CHARGE_2 = 0.5,  -- Carga media
+		BODY_CHARGE_3 = 1.0,  -- Carga alta
+		
+		-- Stun en la cabeza (tiempos largos, fÃ¡ciles de modificar)
+		HEAD_CHARGE_1 = 1.5,  -- Carga baja
+		HEAD_CHARGE_2 = 2.5,  -- Carga media
+		HEAD_CHARGE_3 = 4.0,  -- Carga alta
+	},
 
 	-- APPEARANCE - Enhanced dark colors
 	BODY_PRIMARY = Color3.fromRGB(15, 15, 20),
